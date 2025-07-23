@@ -1,0 +1,47 @@
+/* General body styling */
+body {
+  margin: 0;
+  padding: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  color: #ffffff; /* Colore testo di default bianco */
+  height: 100vh;
+  font-size: 22px;
+  overflow: hidden;
+}
+
+/* Hide the non-active language span */
+body.lang-en .lang-it { display: none; }
+body.lang-it .lang-en { display: none; }
+
+/* Elementi overlay */
+.top-right, .bottom-left, .bottom-right {
+  position: absolute;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Orologio in alto a destra */
+.top-right {
+  top: 20px;
+  right: 30px;
+  font-size: 3em;
+}
+
+/* Data in basso a sinistra */
+.bottom-left {
+  bottom: 20px;
+  left: 30px;
+  font-size: 2em;
+}
+
+/* Etichetta edificio/piano in basso a destra */
+.bottom-right {
+  bottom: 20px;
+  right: 30px;
+  font-size: 2em;
+  text-align: right;
+}

@@ -1,23 +1,21 @@
+"""
+WSGI entrypoint for the Floorplan Display Service.
+Serves a static UI for displaying building floor plans by rendering a template
+with the correct background image based on URL parameters.
+"""
 import os
-from flask import Flask, render_template, abort, url_for
+from flask import Flask, render_template, abort
 
 app = Flask(
     __name__,
-    static_folder="web",
+    static_folder="ui",
     static_url_path="",
-    template_folder="web"
+    template_folder="ui"
 )
 
-# --- Configurazione Aggiornata ---
-
-# Mappatura dei nomi nell'URL alle cartelle reali
-BUILDING_PATHS = {
-    "SBA": "SBA",
-    "A": "EdificioA"
-}
-ALLOWED_BUILDINGS = set(BUILDING_PATHS.keys())
-
-# Mappatura completa di tutte le immagini alle loro estensioni
+# --- Configuration: Define allowed paths and image types ---
+BUILDING_PATHS = { "A": "building_a", "B": "building_b", "SBA": "building_sba" }
+ALLOWED_FLOORS = {-1, 0, 1, 2, 3}
 IMAGE_EXTENSIONS = {
     # Immagini in EdificioA
     "3_docenti": ".jpg",
@@ -40,47 +38,36 @@ IMAGE_EXTENSIONS = {
     "sx-ip": ".png"
 }
 
-ALLOWED_FILENAMES = set(IMAGE_EXTENSIONS.keys())
-# Ho aggiunto il piano 3
-ALLOWED_FLOORS = {0, 1, 2, 3} 
-
-@app.route("/<building>/floor<int:floor>/<image_name>")
-def floor_display(building, floor, image_name):
+@app.route("/<string:building>/floor<int:floor>/<string:image_name>")
+def floor_display(building: str, floor: int, image_name: str):
     """
-    Mostra un'immagine della planimetria partendo da un URL senza estensione del file.
+    Renderizza il visualizzatore di planimetrie con l'immagine di sfondo corretta.
+    Esempio URL: /A/floor1/blockA
     """
-    building_upper = building.upper()
+    building_key = building.upper()
 
-    # Controllo di validità
-    if (building_upper not in ALLOWED_BUILDINGS or
+    if (building_key not in BUILDING_PATHS or
             floor not in ALLOWED_FLOORS or
-            image_name not in ALLOWED_FILENAMES):
-        abort(404)
+            image_name not in IMAGE_EXTENSIONS):
+        abort(404, description="Edificio, piano o nome immagine non validi.")
 
-    # Ricostruisce il nome del file con l'estensione corretta
-    extension = IMAGE_EXTENSIONS[image_name]
-    full_filename = f"{image_name}{extension}"
-
-    # Usa la mappatura per trovare la cartella corretta
-    building_folder = BUILDING_PATHS[building_upper]
-    file_path_for_url = f"assets/{building_folder}/floor{floor}/{full_filename}"
+    building_folder = BUILDING_PATHS[building_key]
+    image_extension = IMAGE_EXTENSIONS[image_name]
+    full_filename = f"{image_name}{image_extension}"
     
-    # Percorso completo che verrà cercato sul disco
-    full_path_on_disk = os.path.join(app.static_folder, file_path_for_url)
+    image_path_for_template = f"/assets/{building_folder}/floor{floor}/{full_filename}"
     
-    # Stampa di debug per verificare il percorso esatto
-    print(f"DEBUG: Checking for file at path: '{full_path_on_disk}'")
-
-    if not os.path.exists(full_path_on_disk):
-        print(f"DEBUG: File NOT FOUND at '{full_path_on_disk}'. Aborting with 404.")
-        abort(404)
-
-    bg_url = url_for('static', filename=file_path_for_url)
+    full_disk_path = os.path.join(app.static_folder, 'assets', building_folder, f"floor{floor}", full_filename)
     
-    return render_template("index.html",
-                           bg_url=bg_url,
-                           building=building_upper,
-                           floor=floor)
+    if not os.path.exists(full_disk_path):
+        abort(404, description=f"File immagine non trovato: {full_disk_path}")
+
+    return render_template(
+        "index.html",
+        background_url=image_path_for_template,
+        building_name=building_key,
+        floor_number=floor
+    )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080, debug=True)
