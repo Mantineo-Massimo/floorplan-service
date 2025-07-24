@@ -62,7 +62,7 @@ Questo servizio è parte della `DigitalSignageSuite` e viene avviato tramite il 
     ```bash
     docker compose up --build -d
     ```
-3.  Il servizio sarà accessibile sulla porta **8082**.
+3.  Il servizio è accessibile tramite il reverse proxy.
 
 ---
 
@@ -72,7 +72,7 @@ L'URL segue lo schema: `/<edificio>/floor<piano>/<nome_immagine>`
 
 * **URL di Esempio:**
     ```
-    http://localhost:8082/A/floor1/blockA
+    http://localhost/floorplan/A/floor1/blockA
     ```
 
 * **Parametri Disponibili:**

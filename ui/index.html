@@ -2,20 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Floor Plan Display</title>
-  <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="icon" href="/assets/favicon.ico">
+  <title>Floor Plan Display – {{ building_name }} Floor {{ floor_number }}</title>
+  <link rel="stylesheet" href="/floorplan/static/css/style.css">
+  <!-- MODIFICA: Aggiornato il percorso per includere /assets/ -->
+  <link rel="icon" href="/floorplan/assets/favicon.ico">
 </head>
 <body
   class="lang-en"
   data-building="{{ building_name }}"
   data-floor="{{ floor_number }}"
-  style="background: url('{{ background_url }}') center/cover no-repeat fixed;"
+  style="background: url('{{ background_url }}') center/cover no-repeat fixed"
 >
   <div id="clock" class="top-right"></div>
   <div id="current-date" class="bottom-left"></div>
   <div id="floor-label" class="bottom-right"></div>
 
-  <script src="/static/js/script.js"></script>
+  <script src="/floorplan/static/js/script.js"></script>
 </body>
 </html>
