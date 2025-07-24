@@ -7,6 +7,8 @@
 
 Un microservizio semplice e robusto progettato per visualizzare immagini di planimetrie a schermo intero, con selezione dinamica tramite URL.
 
+![Showcase del Servizio](https://github.com/Mantineo-Massimo/DigitalSignageSuite/blob/master/docs/floorplan-showcase.png?raw=true)
+
 ---
 
 ## Descrizione
