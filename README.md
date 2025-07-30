@@ -11,6 +11,18 @@ Un microservizio semplice e robusto progettato per visualizzare immagini di plan
 
 ---
 
+## Indice
+
+1.  [Descrizione](#-descrizione)
+2.  [Funzionalità](#-funzionalità)
+3.  [Setup & Configurazione](#-setup&configurazione)
+4.  [Avvio](#-avvio)
+5.  [Utilizzo e URL di Esempio](#-utilizzo-e-url-di-esempio)
+6.  [Tecnologie Utilizzate](#-tecnologie-utilizzate)
+7.  [Autori](#️-autori)
+
+---
+
 ## Descrizione
 
 Lo **Floor Plan Service** ha un unico scopo: mostrare un'immagine specifica di una planimetria. Il servizio è controllato interamente dall'URL, che specifica l'edificio, il piano e il nome dell'immagine da caricare.
@@ -29,7 +41,7 @@ Il backend Flask valida i parametri, controlla che il file esista e lo imposta c
 
 ---
 
-## Setup & Struttura File
+## Setup & Configurazione
 
 Questo servizio **non richiede un file `.env`**. La sua configurazione dipende interamente dalla struttura delle cartelle in cui vengono inserite le immagini.
 
@@ -90,3 +102,10 @@ L'URL segue lo schema: `/<edificio>/floor<piano>/<nome_immagine>`
 * **Backend**: Python, Flask, Gunicorn
 * **Frontend**: HTML5, CSS3, JavaScript
 * **Deployment**: Docker
+
+---
+
+## Autori
+
+Massimo Mantineo – Università degli Studi di Messina
+Adeebullah Hamidy – Università degli Studi di Messina
