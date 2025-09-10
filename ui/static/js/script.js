@@ -1,5 +1,5 @@
 /**
- * Script for the Floor Plan Display - Legacy Browser Compatible Version.
+ * Script for the Floor Plan Display - Robust & Legacy Browser Compatible Version.
  */
 document.addEventListener('DOMContentLoaded', function() {
     // --- Riferimenti al DOM ---
@@ -34,8 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // Correzione per compatibilità
     var padZero = function(n) {
-        return String(n).padStart(2, '0');
+        return n < 10 ? '0' + n : String(n);
     };
 
     /** Aggiorna solo l'orologio (chiamata ogni secondo) */
@@ -49,12 +50,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var lang = translations[state.currentLanguage];
         var now = new Date();
         
-        // Aggiorna data
         var dayName = lang.days[now.getDay()];
         var monthName = lang.months[now.getMonth()];
         dom.date.textContent = dayName + ' ' + now.getDate() + ' ' + monthName + ' ' + now.getFullYear();
 
-        // Aggiorna etichetta piano
         var buildingKey = dom.body.dataset.building;
         var floorNumber = dom.body.dataset.floor;
         var buildingName = lang.building[buildingKey] || buildingKey;
@@ -65,26 +64,45 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleLanguage() {
         state.currentLanguage = (state.currentLanguage === 'en') ? 'it' : 'en';
         dom.body.className = 'lang-' + state.currentLanguage;
-        updateStaticUI(); // Aggiorna i testi con la nuova lingua
+        updateStaticUI();
     }
+
+            // --- Logica per la Schermata di Caricamento ---
+    // Aspetta che l'intera pagina (immagini, stili, etc.) sia completamente caricata
+    window.onload = function() {
+        var loader = document.getElementById('loader');
+        if (loader) {
+            // Aggiunge la classe 'hidden' per far scomparire il loader con una transizione
+            loader.classList.add('hidden');
+        }
+    };
+    
 
     /** Funzione di avvio */
     function init() {
         dom.body.className = 'lang-' + state.currentLanguage;
-        updateStaticUI(); // Imposta i testi statici all'avvio
+        updateStaticUI();
 
         var secondsCounter = 0;
 
-        // Unico timer per gestire tutti gli aggiornamenti
+        // Aggiunto try...catch per robustezza
         setInterval(function() {
-            secondsCounter++;
-            updateClock(); // Ogni secondo
+            try {
+                secondsCounter++;
+                updateClock();
 
-            // Ogni 15 secondi, cambia la lingua
-            if (secondsCounter % config.languageToggleInterval === 0) {
-                toggleLanguage();
+                if (secondsCounter % config.languageToggleInterval === 0) {
+                    toggleLanguage();
+                }
+            } catch (e) {
+                console.error("Errore nell'intervallo principale:", e);
             }
         }, 1000);
+
+        // Aggiunto ricaricamento pagina per stabilità
+        setTimeout(function() { 
+            window.location.reload(true); 
+        }, 4 * 60 * 60 * 1000);
     }
 
     init();
