@@ -1,5 +1,5 @@
 /**
- * Script for the Floor Plan Display - Robust & Legacy Browser Compatible Version.
+ * Script for the Floor Plan Display - UNIFIED TIME FINAL VERSION
  */
 document.addEventListener('DOMContentLoaded', function() {
     // --- Riferimenti al DOM ---
@@ -12,48 +12,83 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Stato e Configurazione ---
     var state = {
-        currentLanguage: 'it'
+        currentLanguage: 'it',
+        timeDifference: 0 // Differenza tra ora del server e ora locale
     };
 
     var config = {
-        languageToggleInterval: 15 // in secondi
+        // URL del nostro time service.
+        timeServiceUrl: 'http://172.16.32.13/api/time/', 
+        languageToggleInterval: 15, // in secondi
+        dataRefreshInterval: 5 * 60 // Intervallo per risincronizzare l'ora
     };
 
     var translations = {
         it: {
-            days: ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"],
-            months: ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"],
+            // Questi non sono più necessari per la data, ma li teniamo per l'etichetta del piano
             floor: "Piano",
             building: { "A": "Edificio A", "B": "Edificio B", "SBA": "Edificio SBA" }
         },
         en: {
-            days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-            months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
             floor: "Floor",
             building: { "A": "Building A", "B": "Building B", "SBA": "Building SBA" }
         }
     };
 
-    // Correzione per compatibilità
-    var padZero = function(n) {
-        return n < 10 ? '0' + n : String(n);
-    };
-
-    /** Aggiorna solo l'orologio (chiamata ogni secondo) */
-    function updateClock() {
-        var now = new Date();
-        dom.clock.textContent = padZero(now.getHours()) + ':' + padZero(now.getMinutes()) + ':' + padZero(now.getSeconds());
+    // NUOVA FUNZIONE per sincronizzare con il server
+    function syncTimeWithServer() {
+        fetch(config.timeServiceUrl)
+            .then(function(response) {
+                if (!response.ok) throw new Error('Time API not responding');
+                return response.json();
+            })
+            .then(function(data) {
+                var serverNow = new Date(data.time);
+                var clientNow = new Date();
+                state.timeDifference = serverNow - clientNow;
+                dom.clock.style.color = ''; // Rimuove il colore rosso in caso di successo
+                console.log('Time synchronized. Server/client difference:', state.timeDifference, 'ms');
+            })
+            .catch(function(error) {
+                console.error('Could not sync time with server:', error);
+                state.timeDifference = 0; // Fallback: usa l'ora locale in caso di errore
+                dom.clock.style.color = 'red'; // Indica visivamente un problema
+            });
     }
 
-    /** Aggiorna gli elementi statici dell'UI (data, etichetta piano) */
+    /** MODIFICATO: Aggiorna l'orologio e la data usando l'ora locale di Roma */
+    function updateSyncedElements() {
+        var serverTime = new Date(new Date().getTime() + state.timeDifference);
+        
+        // --- Orologio (ora locale di Roma) ---
+        var clockOptions = {
+            timeZone: 'Europe/Rome',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+        dom.clock.textContent = serverTime.toLocaleTimeString('it-IT', clockOptions);
+
+        // --- Data (data locale di Roma) ---
+        var dateOptions = {
+            timeZone: 'Europe/Rome', // Assicura che il giorno sia corretto
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        // Usa la lingua corretta per formattare la data
+        var locale = (state.currentLanguage === 'it') ? 'it-IT' : 'en-GB';
+        var formattedDate = serverTime.toLocaleDateString(locale, dateOptions);
+
+        // Mette in maiuscolo la prima lettera del giorno
+        dom.date.textContent = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+    }
+
+    /** Aggiorna gli elementi statici dell'UI (solo etichetta piano) */
     function updateStaticUI() {
         var lang = translations[state.currentLanguage];
-        var now = new Date();
-        
-        var dayName = lang.days[now.getDay()];
-        var monthName = lang.months[now.getMonth()];
-        dom.date.textContent = dayName + ' ' + now.getDate() + ' ' + monthName + ' ' + now.getFullYear();
-
         var buildingKey = dom.body.dataset.building;
         var floorNumber = dom.body.dataset.floor;
         var buildingName = lang.building[buildingKey] || buildingKey;
@@ -67,39 +102,39 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStaticUI();
     }
 
-            // --- Logica per la Schermata di Caricamento ---
-    // Aspetta che l'intera pagina (immagini, stili, etc.) sia completamente caricata
     window.onload = function() {
         var loader = document.getElementById('loader');
         if (loader) {
-            // Aggiunge la classe 'hidden' per far scomparire il loader con una transizione
             loader.classList.add('hidden');
         }
     };
     
-
     /** Funzione di avvio */
     function init() {
         dom.body.className = 'lang-' + state.currentLanguage;
         updateStaticUI();
+        syncTimeWithServer(); // Sincronizza l'orologio all'avvio
 
         var secondsCounter = 0;
 
-        // Aggiunto try...catch per robustezza
         setInterval(function() {
             try {
                 secondsCounter++;
-                updateClock();
+                updateSyncedElements(); // Ora aggiorna sia orologio che data
 
                 if (secondsCounter % config.languageToggleInterval === 0) {
                     toggleLanguage();
+                }
+                
+                // Risincronizza l'orario periodicamente per evitare disallineamenti
+                if (secondsCounter % config.dataRefreshInterval === 0) {
+                    syncTimeWithServer();
                 }
             } catch (e) {
                 console.error("Errore nell'intervallo principale:", e);
             }
         }, 1000);
 
-        // Aggiunto ricaricamento pagina per stabilità
         setTimeout(function() { 
             window.location.reload(true); 
         }, 4 * 60 * 60 * 1000);

@@ -11,7 +11,8 @@ app = Flask(
 )
 
 # --- Configurazione ---
-BUILDING_PATHS = { "A": "building_A", "SBA": "building_SBA" }
+# MODIFICATO: Aggiunto l'edificio B
+BUILDING_PATHS = { "A": "building_A", "SBA": "building_SBA", "B": "building_B" }
 ALLOWED_FLOORS = {-1, 0, 1, 2, 3}
 
 # --- Rotta Principale per le Planimetrie ---
@@ -24,10 +25,12 @@ def floor_display(building: str, floor_str: str, image_name: str):
     building_key = building.upper()
 
     try:
+        # Estrae il numero dal piano, gestendo anche stringhe come 'piano0'
         floor_number = int(re.sub(r'\D', '', floor_str) or 0)
     except (ValueError, TypeError):
         abort(400, "Formato del piano non valido.")
 
+    # I piani per l'edificio B (0, 1, 2, 3) sono già inclusi in ALLOWED_FLOORS
     if building_key not in BUILDING_PATHS or floor_number not in ALLOWED_FLOORS:
         abort(404, "Edificio o piano non trovato.")
 
@@ -49,7 +52,6 @@ def floor_display(building: str, floor_str: str, image_name: str):
     assets_root = Path(app.static_folder) / 'assets'
     relative_path = Path(full_disk_path).relative_to(assets_root)
     
-    # MODIFICATO: Aggiunto il prefisso '/floorplan' al percorso dell'immagine.
     # Questo assicura che il browser invii la richiesta a Nginx,
     # che la inoltrerà correttamente a questa applicazione Flask.
     image_path_for_template = f"/floorplan/assets/{relative_path.as_posix()}"
@@ -65,7 +67,6 @@ def floor_display(building: str, floor_str: str, image_name: str):
 # Queste rotte sono necessarie affinché il template HTML possa caricare
 # le immagini e altri file statici.
 
-# AGGIUNTO: Rotta per servire i file dalla cartella 'static' (CSS, JS, etc.)
 @app.route('/static/<path:path>')
 def serve_static_files(path):
     """Serve i file statici come CSS e JavaScript."""
@@ -82,4 +83,3 @@ def favicon():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
-
