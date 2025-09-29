@@ -1,4 +1,14 @@
-Flask>=2.3
-gunicorn>=21.2
+# --- Framework Web e Server ---
+Flask==2.3.3
+gunicorn==21.2.0
+
+# --- Estensioni di Sicurezza e Utilità ---
 Flask-Talisman==1.1.0
 Flask-Limiter==3.5.0
+Flask-Cors
+python-dotenv==1.0.0
+
+# --- Librerie Dati ---
+# EN: The Python client for Redis, required by Flask-Limiter for storage.
+# IT: Il client Python per Redis, richiesto da Flask-Limiter per la memorizzazione.
+redis
