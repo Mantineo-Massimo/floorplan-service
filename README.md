@@ -14,6 +14,7 @@ Un microservizio visuale che mostra planimetrie di edifici e piani specifici, pr
 ## Indice
 
 - [Panoramica del Progetto](#panoramica-del-progetto)
+- [Diagramma dell'Architettura](#diagramma-dellarchitettura)
 - [Caratteristiche Principali](#caratteristiche-principali)
 - [Tecnologie Utilizzate](#tecnologie-utilizzate)
 - [Struttura della Directory](#struttura-della-directory)
@@ -34,14 +35,45 @@ Il `floorplan-service` fornisce un contesto visuale all'interno della Digital Si
 
 ---
 
+## Diagramma dell'Architettura
+
+L'architettura di questo servizio è più semplice rispetto agli altri, poiché non interagisce con API esterne ma serve file locali in modo intelligente.
+
+```mermaid
+graph TD
+    subgraph "Client (Browser del Display)"
+        A[Richiesta HTTP per una planimetria]
+    end
+
+    subgraph "Digital Signage Suite (Rete Docker)"
+        B{Proxy Nginx}
+        C[Container floorplan-service]
+        D[(Volume: ui/assets/...)]
+    end
+
+    A -- 1. /floorplan/A/floor0/A-S-1 --> B;
+    B -- 2. Inoltra la richiesta a --> C;
+    C -- 3. Cerca e trova l'immagine in --> D;
+    C -- 4. Renderizza il template HTML --> B;
+    B -- 5. Invia la pagina al client --> A;
+
+```
+1.  Un display richiede un URL specifico al **Proxy Nginx**.
+2.  Nginx inoltra la richiesta al **`floorplan-service`**.
+3.  Il servizio Flask cerca l'immagine richiesta nel volume locale dove sono salvate le planimetrie.
+4.  Flask renderizza la pagina HTML, inserendo l'URL dell'immagine trovata come sfondo.
+5.  La pagina completa viene restituita al display.
+
+---
+
 ## Caratteristiche Principali
 
 - ✅ **Visualizzazione Dinamica**: Mostra un'immagine diversa in base ai parametri `edificio`, `piano` e `nome_immagine` nell'URL.
-- ⚙️ **Configurazione Flessibile**: La mappatura tra sigle degli edifici e nomi delle cartelle è gestita da variabili d'ambiente, senza hardcoding.
-- 🛡️ **Sicurezza**: Include estensioni come `Talisman` e `CORS` e una Content Security Policy configurata per prevenire attacchi comuni.
+- ⚙️ **Configurazione Flessibile**: La mappatura tra sigle degli edifici e nomi delle cartelle è gestita da variabili d'ambiente.
+- 🛡️ **Sicurezza**: Include estensioni come `Talisman` e `CORS` e una Content Security Policy configurata.
 - ❤️ **Health Check**: Endpoint `/health` per un facile monitoraggio dello stato del servizio.
 - 📄 **Pagina di Errore Personalizzata**: Mostra una pagina 404 coerente con la grafica del sistema.
-- 🐳 **Containerizzato**: Completamente gestito tramite Docker e Docker Compose per un deploy semplice e ripetibile.
+- 🐳 **Containerizzato**: Completamente gestito tramite Docker e Docker Compose.
 
 ---
 
@@ -55,51 +87,42 @@ Il `floorplan-service` fornisce un contesto visuale all'interno della Digital Si
 ---
 
 ## Struttura della Directory
-
 ```
 floorplan-service/
-├── app/                  # Codice sorgente dell'applicazione Flask
+├── app/
 │   ├── __init__.py       # Application factory (crea l'app Flask)
 │   ├── config.py         # Carica e processa la configurazione da .env
-│   └── routes.py         # Definisce tutte le rotte e la logica di ricerca immagini
+│   └── routes.py         # Definisce tutte le rotte e la logica
 │
-├── tests/                # (da implementare) Test automatici
-│
-├── ui/                   # Tutti i file del front-end
+├── ui/
 │   ├── assets/           # Immagini delle planimetrie e assets comuni
 │   ├── static/           # File CSS e JavaScript
-│   ├── 404.html          # Template per la pagina di errore
-│   └── index.html        # Template principale per la visualizzazione
+│   ├── 404.html
+│   └── index.html
 │
-├── .env.example          # File di esempio per le variabili d'ambiente
-├── Dockerfile            # Istruzioni per costruire l'immagine Docker
-├── requirements.txt      # Dipendenze Python
-└── run.py                # Punto di ingresso per avviare il server Gunicorn
+├── .env.example
+├── Dockerfile
+├── requirements.txt
+└── run.py
 ```
 
 ---
 
 ## Struttura delle Immagini (Importante!)
 
-Perché il servizio funzioni, le immagini delle planimetrie devono essere organizzate in una struttura di cartelle specifica all'interno di `ui/assets/`. Il nome della cartella dell'edificio deve corrispondere a quanto configurato nel file `.env`.
+Perché il servizio funzioni, le immagini devono essere organizzate in una struttura specifica all'interno di `ui/assets/`.
 
 ```
 ui/
 └── assets/
     ├── building_A/
     │   ├── floor0/
-    │   │   ├── A-S-1.png
     │   │   └── A-S-6.png
-    │   ├── floor1/
-    │   │   └── A-1-1.png
-    │   └── floor_1/  <-- Nota: il nome della cartella deve corrispondere al parametro nell'URL
+    │   └── floor_1/
     │       └── A-1-6.jpg
     │
     ├── building_B/
     │   └── ...
-    │
-    └── building_SBA/
-        └── ...
 ```
 
 ---
@@ -113,38 +136,26 @@ ui/
 
 ## Guida all'Installazione
 
-1.  **Clona il Repository** e naviga nella cartella principale `DigitalSignageSuite`.
-
-2.  **Configura le Variabili d'Ambiente**:
-    - Naviga in `floorplan-service` e copia `.env.example` in `.env`.
-    - Modifica `.env` se necessario per riflettere la tua configurazione di edifici e piani.
-
-3.  **Prepara la Struttura delle Immagini**:
-    - Assicurati di aver creato la struttura di cartelle e inserito le immagini come descritto nella sezione [Struttura delle Immagini](#struttura-delle-immagini-importante).
-
-4.  **Avvia lo Stack Docker**:
-    Dalla cartella principale `DigitalSignageSuite`, esegui:
-    ```bash
-    docker compose up --build -d
-    ```
+1.  **Clona il Repository**.
+2.  **Configura le Variabili d'Ambiente**: In `floorplan-service`, copia `.env.example` in `.env`.
+3.  **Prepara la Struttura delle Immagini**: Crea le cartelle in `ui/assets/` e inserisci le immagini.
+4.  **Avvia lo Stack Docker**: Dalla cartella principale, esegui `docker compose up --build -d`.
 
 ---
 
-## Accesso e Link Utili 
+## Accesso e Link Utili 🔗
 
-- **Formato del Link per Planimetrie**:
-  `http://<IP_SERVER>/floorplan/{EDIFICIO}/{PIANO}/{IMMAGINE}`
+- **Link Planimetrie**: `http://<IP_SERVER>/floorplan/{EDIFICIO}/{PIANO}/{IMMAGINE}`
   - **Esempio:** `http://localhost/floorplan/A/floor_1/A-1-6`
 
-- **Health Check**:
-  `http://localhost/floorplan/health`
+- **Health Check**: `http://localhost/floorplan/health`
 
 ---
 
 ## Variabili d'Ambiente
 
-- `BUILDINGS`: Lista di sigle di edifici e nomi di cartelle, separati da virgola (es. `A:building_A,B:building_B`).
-- `ALLOWED_FLOORS`: Lista di tutti i numeri di piano permessi, separati da virgola (es. `-1,0,1,2,3`).
+- `BUILDINGS`: Lista di sigle di edifici e nomi di cartelle (es. `A:building_A,B:building_B`).
+- `ALLOWED_FLOORS`: Lista di numeri di piano permessi (es. `-1,0,1,2,3`).
 
 ---
 
@@ -156,7 +167,7 @@ La suite di test per questo servizio non è ancora stata implementata.
 
 ## Come Contribuire
 
-I contributi sono sempre i benvenuti! Segui la procedura standard di Fork & Pull Request.
+Segui la procedura standard di Fork & Pull Request.
 
 ---
 
