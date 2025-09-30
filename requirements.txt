@@ -7,6 +7,11 @@ Flask-Talisman==1.1.0
 Flask-Cors
 python-dotenv==1.0.0
 
+# --- Librerie Dati ---
+# EN: The Python client for the Redis key-value store, used for caching.
+# IT: Il client Python per il key-value store Redis, usato per la cache.
+redis
+
 # --- Librerie per i Test ---
 # EN: Framework for writing and running automated tests.
 # IT: Framework per scrivere ed eseguire test automatici.

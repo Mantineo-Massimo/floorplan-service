@@ -20,3 +20,8 @@ BUILDING_PATHS = {
 # IT: Esegue il parsing della stringa FLOORS separata da virgole in un set di interi.
 floors_str = os.getenv("ALLOWED_FLOORS", "-1,0,1,2,3")
 ALLOWED_FLOORS = {int(floor.strip()) for floor in floors_str.split(',')}
+
+# EN: Load Redis URL and Cache TTL from environment.
+# IT: Carica l'URL di Redis e il TTL della cache dall'ambiente.
+REDIS_URL = os.getenv("REDIS_URL", "redis://redis_cache:6379/0")
+CACHE_TTL_MINUTES = int(os.getenv("CACHE_TTL_MINUTES", 60))

@@ -1,6 +1,6 @@
 """
-EN: Defines all web routes for the Floorplan Service.
-IT: Definisce tutte le rotte web per il Floorplan Service.
+EN: Defines all web routes for the Floorplan Service, with caching logic.
+IT: Definisce tutte le rotte web per il Floorplan Service, con logica di cache.
 """
 import os
 import re
@@ -13,8 +13,8 @@ bp = Blueprint('floorplan', __name__)
 @bp.route("/<string:building>/<string:floor_str>/<string:image_name>")
 def floor_display(building: str, floor_str: str, image_name: str):
     """
-    EN: Dynamically finds and displays a floor plan image, searching recursively.
-    IT: Trova e visualizza dinamicamente un'immagine di una planimetria, cercandola ricorsivamente.
+    EN: Dynamically finds and displays a floor plan image, using Redis to cache the result.
+    IT: Trova e visualizza dinamicamente una planimetria, usando Redis per mettere in cache il risultato.
     """
     building_key = building.upper()
     
@@ -29,23 +29,45 @@ def floor_display(building: str, floor_str: str, image_name: str):
     if building_key not in building_paths or floor_number not in allowed_floors:
         abort(404, "Building or floor not found.")
 
-    building_folder = building_paths[building_key]
-    ui_folder_abs = os.path.abspath(os.path.join(current_app.root_path, '..', 'ui'))
-    assets_root_abs = os.path.join(ui_folder_abs, 'assets')
-    base_search_path = os.path.join(assets_root_abs, building_folder, floor_str)
+    # --- CACHING LOGIC ---
+    cache_key = f"floorplan:{building_key}:{floor_str}:{image_name}"
+    try:
+        cached_path = current_app.redis.get(cache_key)
+    except Exception as e:
+        current_app.logger.error(f"Redis connection failed: {e}")
+        cached_path = None
 
-    if not os.path.isdir(base_search_path):
-        abort(404, f"Directory for floor '{floor_str}' not found.")
+    if cached_path:
+        image_path_for_template = cached_path.decode('utf-8')
+        current_app.logger.info(f"Cache HIT for {cache_key}")
+    else:
+        current_app.logger.info(f"Cache MISS for {cache_key}")
+        
+        building_folder = building_paths[building_key]
+        ui_folder_abs = os.path.abspath(os.path.join(current_app.root_path, '..', 'ui'))
+        assets_root_abs = os.path.join(ui_folder_abs, 'assets')
+        base_search_path = os.path.join(assets_root_abs, building_folder, floor_str)
 
-    search_pattern = os.path.join(base_search_path, '**', f'{image_name}.*')
-    found_files = glob.glob(search_pattern, recursive=True)
+        if not os.path.isdir(base_search_path):
+            abort(404, f"Directory for floor '{floor_str}' not found.")
 
-    if not found_files:
-        abort(404, f"Image '{image_name}' not found in '{building_key}/{floor_str}'.")
+        search_pattern = os.path.join(base_search_path, '**', f'{image_name}.*')
+        found_files = glob.glob(search_pattern, recursive=True)
 
-    relative_path = Path(found_files[0]).relative_to(assets_root_abs)
-    image_path_for_template = f"/floorplan/assets/{relative_path.as_posix()}"
+        if not found_files:
+            abort(404, f"Image '{image_name}' not found in '{building_key}/{floor_str}'.")
 
+        relative_path = Path(found_files[0]).relative_to(assets_root_abs)
+        image_path_for_template = f"/floorplan/assets/{relative_path.as_posix()}"
+        
+        # EN: Save the found path to the Redis cache.
+        # IT: Salva il percorso trovato nella cache di Redis.
+        try:
+            ttl_seconds = current_app.config.get('CACHE_TTL_MINUTES', 60) * 60
+            current_app.redis.setex(cache_key, ttl_seconds, image_path_for_template)
+        except Exception as e:
+            current_app.logger.error(f"Redis SET failed for key '{cache_key}': {e}")
+            
     return render_template(
         "index.html",
         background_url=image_path_for_template,
@@ -53,6 +75,7 @@ def floor_display(building: str, floor_str: str, image_name: str):
         floor_number=floor_number
     )
 
+# --- Static File and Monitoring Routes ---
 @bp.route('/assets/<path:path>')
 def serve_assets(path):
     assets_folder = os.path.abspath(os.path.join(current_app.root_path, '..', 'ui', 'assets'))
