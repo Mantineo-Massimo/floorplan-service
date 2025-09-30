@@ -74,6 +74,7 @@ graph TD
 - ❤️ **Health Check**: Endpoint `/health` per un facile monitoraggio dello stato del servizio.
 - 📄 **Pagina di Errore Personalizzata**: Mostra una pagina 404 coerente con la grafica del sistema.
 - 🐳 **Containerizzato**: Completamente gestito tramite Docker e Docker Compose.
+- 🧪 **Testato**: Include una suite di test di integrazione con `pytest` per garantire l'affidabilità.
 
 ---
 
@@ -83,6 +84,7 @@ graph TD
 - **Containerizzazione**: Docker, Docker Compose
 - **Sicurezza**: Flask-Talisman, Flask-Cors
 - **Configurazione**: Python-dotenv
+- **Testing**: Pytest
 
 ---
 
@@ -93,6 +95,10 @@ floorplan-service/
 │   ├── __init__.py       # Application factory (crea l'app Flask)
 │   ├── config.py         # Carica e processa la configurazione da .env
 │   └── routes.py         # Definisce tutte le rotte e la logica
+│
+├── tests/                # Test automatici
+│   ├── __init__.py
+│   └── test_floorplan_api.py
 │
 ├── ui/
 │   ├── assets/           # Immagini delle planimetrie e assets comuni
@@ -161,14 +167,28 @@ ui/
 
 ## Esecuzione dei Test
 
-La suite di test per questo servizio non è ancora stata implementata.
+I test di integrazione verificano che gli endpoint principali si comportino come previsto.
+
+**Prerequisiti:** Lo stack Docker deve essere in esecuzione.
+
+Per lanciare i test, esegui questo comando dalla cartella principale `DigitalSignageSuite`:
+```bash
+cd floorplan-service
+pytest
+```
+L'output dovrebbe mostrare che tutti i test sono stati superati (`... passed`).
 
 ---
 
 ## Come Contribuire
 
-Segui la procedura standard di Fork & Pull Request.
-
+I contributi sono sempre i benvenuti! Per contribuire:
+1.  Fai un fork del repository.
+2.  Crea un nuovo branch (`git checkout -b feature/nome-feature`).
+3.  Fai le tue modifiche e assicurati che i test passino (`pytest`).
+4.  Fai il commit delle tue modifiche (`git commit -am 'Aggiungi nuova feature'`).
+5.  Fai il push sul tuo branch (`git push origin feature/nome-feature`).
+6.  Apri una Pull Request.
 ---
 
 ## Licenza

@@ -4,11 +4,14 @@ gunicorn==21.2.0
 
 # --- Estensioni di Sicurezza e Utilità ---
 Flask-Talisman==1.1.0
-Flask-Limiter==3.5.0
 Flask-Cors
 python-dotenv==1.0.0
 
-# --- Librerie Dati ---
-# EN: The Python client for Redis, required by Flask-Limiter for storage.
-# IT: Il client Python per Redis, richiesto da Flask-Limiter per la memorizzazione.
-redis
+# --- Librerie per i Test ---
+# EN: Framework for writing and running automated tests.
+# IT: Framework per scrivere ed eseguire test automatici.
+pytest
+
+# EN: Library for making HTTP requests, needed for integration tests.
+# IT: Libreria per fare richieste HTTP, necessaria per i test di integrazione.
+requests
