@@ -35,7 +35,9 @@ def create_app():
     CORS(app)
     Talisman(app, force_https=False, content_security_policy=csp)
 
-    from .routes import bp
-    app.register_blueprint(bp)
+    # EN: Register the blueprint containing all routes.
+    # IT: Registra il blueprint contenente tutte le rotte.
+    from app.api.routes import bp as floorplan_bp
+    app.register_blueprint(floorplan_bp, url_prefix='/floorplan')
     
     return app
