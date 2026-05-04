@@ -119,16 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.onload = hideLoader;
     
     /**
-     * EN: Helper to get URL parameters without URLSearchParams (for broad compatibility).
-     */
-    function getUrlParameter(name) {
-        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        var results = regex.exec(window.location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-    }
-
-    /**
      * EN: Main initialization function.
      * IT: Funzione di inizializzazione principale.
      */

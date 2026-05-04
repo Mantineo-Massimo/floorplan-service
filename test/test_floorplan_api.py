@@ -20,17 +20,22 @@ def test_health_check_endpoint():
 
 def test_floor_display_success():
     """
-    EN: Tests a successful request to a valid floor plan URL.
-    Expects a 200 OK response.
-    IT: Testa una richiesta valida a un URL di una planimetria.
-    Si aspetta una risposta 200 OK.
+    EN: Tests a successful request to a valid floor plan URL using the folder name.
+    IT: Testa una richiesta valida usando il nome della cartella.
     """
-    # EN: IMPORTANT: This test assumes you have this exact image path in your assets.
-    # IT: IMPORTANTE: Questo test presume che tu abbia questo esatto percorso nei tuoi asset.
     response = requests.get(f"{BASE_URL}/floorplan/a/floor_0/A-S-1")
     assert response.status_code == 200
-    # EN: We also check that the response is HTML content.
-    # IT: Controlliamo anche che la risposta sia contenuto HTML.
+    assert "text/html" in response.headers['Content-Type']
+
+def test_floor_display_numeric_success():
+    """
+    EN: Tests a successful request using just the floor number (flexible matching).
+    IT: Testa una richiesta valida usando solo il numero del piano (matching flessibile).
+    """
+    # EN: This should match 'floor_0' even if we only send '0'.
+    # IT: Dovrebbe trovare 'floor_0' anche se inviamo solo '0'.
+    response = requests.get(f"{BASE_URL}/floorplan/a/0/A-S-1")
+    assert response.status_code == 200
     assert "text/html" in response.headers['Content-Type']
 
 def test_floor_display_not_found_image():

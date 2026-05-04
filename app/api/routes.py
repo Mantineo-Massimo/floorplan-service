@@ -19,7 +19,12 @@ def floor_display(building: str, floor_str: str, image_name: str):
     building_key = building.upper()
     
     try:
-        floor_number = int(re.sub(r'\D', '', floor_str))
+        # EN: Extract the numeric part, allowing for a leading minus sign.
+        # IT: Estrae la parte numerica, permettendo un eventuale segno meno iniziale.
+        floor_match = re.search(r'-?\d+', floor_str)
+        if not floor_match:
+            abort(400, "Invalid floor format.")
+        floor_number = int(floor_match.group())
     except (ValueError, TypeError):
         abort(400, "Invalid floor format.")
 
@@ -46,16 +51,27 @@ def floor_display(building: str, floor_str: str, image_name: str):
         building_folder = building_paths[building_key]
         ui_folder_abs = os.path.abspath(os.path.join(current_app.root_path, '..', 'ui'))
         assets_root_abs = os.path.join(ui_folder_abs, 'assets')
-        base_search_path = os.path.join(assets_root_abs, building_folder, floor_str)
+        
+        # EN: Try different possible folder names for the floor.
+        # IT: Prova diversi nomi possibili per la cartella del piano.
+        possible_folders = [floor_str, f"floor_{floor_number}", f"floor_{floor_str}"]
+        base_search_path = None
+        
+        for folder in possible_folders:
+            test_path = os.path.join(assets_root_abs, building_folder, folder)
+            if os.path.isdir(test_path):
+                base_search_path = test_path
+                current_app.logger.info(f"Found floor directory: {folder}")
+                break
 
-        if not os.path.isdir(base_search_path):
-            abort(404, f"Directory for floor '{floor_str}' not found.")
+        if not base_search_path:
+            abort(404, f"Directory for floor '{floor_str}' (number {floor_number}) not found.")
 
         search_pattern = os.path.join(base_search_path, '**', f'{image_name}.*')
         found_files = glob.glob(search_pattern, recursive=True)
 
         if not found_files:
-            abort(404, f"Image '{image_name}' not found in '{building_key}/{floor_str}'.")
+            abort(404, f"Image '{image_name}' not found in building '{building_key}', floor '{floor_str}'.")
 
         relative_path = Path(found_files[0]).relative_to(assets_root_abs)
         image_path_for_template = f"/floorplan/assets/{relative_path.as_posix()}"
