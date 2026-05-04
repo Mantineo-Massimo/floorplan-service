@@ -76,6 +76,11 @@ def floor_display(building: str, floor_str: str, image_name: str):
     )
 
 # --- Static File and Monitoring Routes ---
+@bp.route('/static/<path:path>')
+def serve_static(path):
+    static_folder = os.path.abspath(os.path.join(current_app.root_path, '..', 'ui', 'static'))
+    return send_from_directory(static_folder, path)
+
 @bp.route('/assets/<path:path>')
 def serve_assets(path):
     assets_folder = os.path.abspath(os.path.join(current_app.root_path, '..', 'ui', 'assets'))
